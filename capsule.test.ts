@@ -8,22 +8,21 @@ const systemErrorFn = jest.fn();
 
 const uncaughtErrorFn = jest.fn();
 
-const sayHello = Capsule(
-  Task((name: string) => {
-    if (typeof name === "number") {
-      throw new SystemError("Number is not allowed");
-    }
+const sayHello = Capsule((name: string) => {
+  if (typeof name === "number") {
+    throw new SystemError("Number is not allowed");
+  }
 
-    if (name === "John") {
-      throw new Error("John is not allowed");
-    }
+  if (name === "John") {
+    throw new Error("John is not allowed");
+  }
 
-    if (name === "Sara") {
-      throw new BubbleError("Sara is not allowed");
-    }
+  if (name === "Sara") {
+    throw new BubbleError("Sara is not allowed");
+  }
 
-    return `Hello, ${name}!`;
-  }),
+  return `Hello, ${name}!`;
+})(
   CaughtError(SystemError, systemErrorFn),
   CaughtError(BubbleError, (err) => {
     throw err;
@@ -65,8 +64,7 @@ describe(Capsule.name, () => {
   it("should catch BubbleError from the", () => {
     const bubbleFn = jest.fn();
 
-    const wrappedSayHello = Capsule(
-      sayHello,
+    const wrappedSayHello = Capsule(sayHello)(
       CaughtError(BubbleError, bubbleFn)
     );
 
@@ -76,5 +74,13 @@ describe(Capsule.name, () => {
     expect(systemErrorFn).not.toHaveBeenCalled();
     expect(uncaughtErrorFn).not.toHaveBeenCalled();
     expect(bubbleFn).toHaveBeenCalled();
+  });
+
+  it.skip("should pipe another task", () => {
+    const wrappedSayHello = Capsule(sayHello)(Task((name) => `Bye, ${name}!`));
+
+    const result = wrappedSayHello("Mike");
+
+    expect(result).toBe("Bye, Mike!");
   });
 });

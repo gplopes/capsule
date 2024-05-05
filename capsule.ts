@@ -1,10 +1,14 @@
-export const Task =
-  <T extends (...args: any[]) => any>(task: T) =>
-  (...params: Parameters<T>): ReturnType<T> => {
-    return task(...params);
-  };
+export type ErrorClass<T> = { new (...args: any[]): T };
 
-export const CaughtError = <Err = never, ErrCallback = (error: Err) => void>(
+export const Task = <T extends (...args: any[]) => any>(task: T) => ({
+  name: "Task",
+  task,
+});
+
+export const CaughtError = <
+  Err extends ErrorClass<any>,
+  ErrCallback extends (error: Err) => void = (error: Err) => void
+>(
   errorType: Err,
   onFail: ErrCallback
 ) => ({
@@ -26,35 +30,39 @@ type CaughtErrorType = ReturnType<typeof CaughtError<never>>;
 
 type UnCaughtErrorType = ReturnType<typeof UnCaughtError>;
 
-export const Capsule = <
-  T extends [TaskType, ...Array<CaughtErrorType | UnCaughtErrorType>]
->(
-  ...tasks: T
-) => {
-  return (...values: Parameters<T[0]>): ReturnType<T[0]> | undefined => {
-    const [runner, ...caughtErrors] = tasks;
-    const uncaughtError = caughtErrors.find(
-      (catcher) => catcher.name === "UnCaughtError"
-    );
-    try {
-      return runner(...values);
-    } catch (error) {
-      const isHandled = caughtErrors.some((catcher) => {
-        if (
-          error &&
-          catcher.name === "CaughtError" &&
-          error instanceof catcher.errorType
-        ) {
-          catcher.call(error);
-          return true;
+export const Capsule =
+  <
+    MainTask extends (...args: any[]) => any,
+    PipeTask extends Array<TaskType | CaughtErrorType | UnCaughtErrorType>
+  >(
+    runner: MainTask
+  ) =>
+  (...caughtErrors: PipeTask) => {
+    return (
+      ...values: Parameters<MainTask>
+    ): ReturnType<MainTask> | undefined => {
+      const uncaughtError = caughtErrors.find(
+        (catcher) => catcher.name === "UnCaughtError"
+      );
+      try {
+        return runner(...values);
+      } catch (error) {
+        const isHandled = caughtErrors.some((catcher) => {
+          if (
+            error &&
+            catcher.name === "CaughtError" &&
+            error instanceof catcher.errorType
+          ) {
+            catcher.call(error);
+            return true;
+          }
+
+          return false;
+        });
+
+        if (!isHandled) {
+          uncaughtError?.call(error);
         }
-
-        return false;
-      });
-
-      if (!isHandled) {
-        uncaughtError?.call(error);
       }
-    }
+    };
   };
-};
