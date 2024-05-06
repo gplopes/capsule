@@ -1,40 +1,36 @@
 # Capsule
 
 ## Description
-Capsule is a simple function wrapper that allows to handle errors more gracefully.
-
+Capsule is a lightweight function wrapper designed to enhance error handling in your codebase with grace and simplicity. With Capsule, managing errors becomes intuitive and flexible, allowing for cleaner and more robust code.
 
 ## Usage
 
-Wrapping any function with `Capsule` or `SyncCapsule` it will return another function where error handlers must be passed
-there are a few ways how the Capsule can catch/match an error. 
+By encapsulating any function with `Capsule` or `SyncCapsule`, you enable it to return another function where error handlers can be seamlessly integrated. Capsule offers multiple ways to catch and manage errors:
 
-- `CatchError(ErrorInstance, callback)` - Using instance of an error.
-- `CatchErrorBy([key, value], callback)` - Value matching, e.g "[status, 404]"
-- `UnCaughtError(callback)` - Any other value that does not match with the ones above
+- `CatchError(ErrorInstance, callback)`: Utilize specific error instances for targeted handling.
+- `CatchErrorBy([key, value], callback)`: Match errors based on key-value pairs, such as "[status, 404]".
+- `UnCaughtError(callback)`: Define a fallback for any unforeseen errors.
 
-Capsule won't bubble the error unless you specifically tells it to, the way you can do is just
-re-throw the error, e.g:
+Capsule operates non-invasively, meaning it won't propagate errors unless instructed to do so explicitly. If you wish to bubble up an error, simply re-throw it:
 
-```ts
+```typescript
 UnCaughtError((error) => {
-    throw error
+    throw error;
 });
 ```
 
-The capsule will use the first match method from the arguments and discard the others, so it won't pipe
-the error, but rather exit the check once match is concluded.
+Furthermore, Capsule optimizes error handling by employing a first-match approach. Once a match is found, it exits the check.
 
 ```tsx
 const requestData = AsyncCapsule(async (id: string) => {
+const requestData = AsyncCapsule(async (id: string) => {
     const response = await fetch(`.../${id}`);
-    const response = await response.json();
-    return response.data;
+    const responseData = await response.json();
+    return responseData.data;
 })(
-UnCaughtError((error) => console.log("unknown error", error)),
-CatchErrorBy(["status", 401], (error) => console.log("unauthorized access", error))
+UnCaughtError((error) => console.log("Unknown error:", error)),
+CatchErrorBy(["status", 401], (error) => console.log("Unauthorized access:", error))
 );
-
 
 const result = await requestData("<id>");
 ```
