@@ -1,3 +1,4 @@
+import { errorHandler } from './errorHandler';
 import { TCaughtError, TUnCaughtError, TCaughtErrorBy } from './tasks';
 
 export const Capsule =
@@ -9,41 +10,27 @@ export const Capsule =
   ) =>
   (...tasks: TTasks) => {
     return (...values: Parameters<TContext>): ReturnType<TContext> | undefined => {
-      const uncaughtError = tasks.find((task) => task.name === 'UnCaughtError');
-
       try {
         return context(...values);
       } catch (error) {
-        const isHandled = tasks.some((task) => {
-          // Earlier return, if error is falsy and does not contain much information
-          // we pipe it to the uncaughtError callback
-          if (!error) {
-            uncaughtError?.call(error);
-            return true;
-          }
+        errorHandler(tasks, error);
+      }
+    };
+  };
 
-          if (error && task.name === 'CaughtErrorBy') {
-            const [key, value] = task.matcher;
-
-            // @ts-expect-error
-            if (error[key] === value) {
-              task.call(error);
-
-              return true;
-            }
-          }
-
-          if (error && task.name === 'CaughtError' && error && error instanceof task.errorType) {
-            task.call(error);
-            return true;
-          }
-
-          return false;
-        });
-
-        if (!isHandled) {
-          uncaughtError?.call(error);
-        }
+export const AsyncCapsule =
+  <
+    TContext extends (...args: any[]) => Promise<any>,
+    TTasks extends (TCaughtError | TUnCaughtError | TCaughtErrorBy)[],
+  >(
+    context: TContext,
+  ) =>
+  (...tasks: TTasks) => {
+    return (...values: Parameters<TContext>): Promise<ReturnType<TContext>> | undefined => {
+      try {
+        return context(...values);
+      } catch (error) {
+        errorHandler(tasks, error);
       }
     };
   };

@@ -1,5 +1,5 @@
 import { SystemError, BubbleError, NetworkError } from './mocks';
-import { Capsule } from '../capsule';
+import { Capsule, AsyncCapsule } from '../capsule';
 import { CaughtError, UnCaughtError, CaughtErrorBy } from '../tasks';
 
 const systemErrorFn = jest.fn();
@@ -41,6 +41,10 @@ const sayHello = Capsule((name: string) => {
     throw err;
   }),
 );
+
+const fetchHello = AsyncCapsule(async (name: string) => {
+  return `Async Hello, ${name}!`;
+})(UnCaughtError(uncaughtErrorFn));
 
 describe(Capsule.name, () => {
   beforeEach(() => {
@@ -102,5 +106,13 @@ describe(Capsule.name, () => {
     expect(systemErrorFn).not.toHaveBeenCalled();
     expect(uncaughtErrorFn).not.toHaveBeenCalled();
     expect(statusErrorFn).toHaveBeenCalled();
+  });
+});
+
+describe(AsyncCapsule.name, () => {
+  it('should say hello', async () => {
+    const result = await fetchHello('Mike');
+
+    expect(result).toBe('Async Hello, Mike!');
   });
 });

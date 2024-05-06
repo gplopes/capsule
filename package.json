@@ -3,17 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "files": [
+    "src/**/*"
+  ],
   "scripts": {
-    "start": "node -r @swc-node/register index.ts",
-    "test": "jest",
-    "lint": "eslint ."
+    "test": "jest  --coverage",
+    "lint": "eslint .",
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@swc-node/register": "^1.6.8",
-    "source-map": "^0.7.4"
-  },
   "devDependencies": {
     "@swc/core": "^1.4.17",
     "@swc/jest": "^0.2.36",
