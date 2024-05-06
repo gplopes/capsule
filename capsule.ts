@@ -24,6 +24,19 @@ export const UnCaughtError = <TCallback extends (error: unknown) => void>(
   call: onFail,
 });
 
+export const CaughtErrorBy = <
+  Err,
+  ErrCallback extends (error: Err) => void = (error: Err) => void,
+  ErrorKey extends keyof Err = keyof Err
+>(
+  matcher: [ErrorKey, Err[ErrorKey]],
+  onFail: ErrCallback
+) => ({
+  name: "CaughtErrorBy",
+  matcher,
+  call: onFail,
+});
+
 type TaskType = ReturnType<typeof Task<never>>;
 
 type CaughtErrorType = ReturnType<typeof CaughtError<never>>;
@@ -48,6 +61,15 @@ export const Capsule =
         return runner(...values);
       } catch (error) {
         const isHandled = caughtErrors.some((catcher) => {
+          if (error && catcher.name === "CaughtErrorBy") {
+            const [key, value] = catcher.matcher;
+
+            if (error[key] === value) {
+              catcher.call(error);
+              return true;
+            }
+          }
+
           if (
             error &&
             catcher.name === "CaughtError" &&

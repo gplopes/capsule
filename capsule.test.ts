@@ -1,12 +1,28 @@
-import { Capsule, Task, CaughtError, UnCaughtError } from "./capsule";
+import {
+  Capsule,
+  Task,
+  CaughtError,
+  UnCaughtError,
+  CaughtErrorBy,
+} from "./capsule";
 
 class SystemError extends Error {}
 
 class BubbleError extends Error {}
 
+class NetworkError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
+
 const systemErrorFn = jest.fn();
 
 const uncaughtErrorFn = jest.fn();
+
+const hackingErrorFn = jest.fn();
+
+const statusErrorFn = jest.fn();
 
 const sayHello = Capsule((name: string) => {
   if (typeof name === "number") {
@@ -21,12 +37,22 @@ const sayHello = Capsule((name: string) => {
     throw new BubbleError("Sara is not allowed");
   }
 
+  if (name === "Kevin") {
+    throw new Error("hacking");
+  }
+
+  if (name === "_") {
+    throw new NetworkError("Not found", 404);
+  }
+
   return `Hello, ${name}!`;
 })(
   CaughtError(SystemError, systemErrorFn),
   CaughtError(BubbleError, (err) => {
     throw err;
   }),
+  CaughtErrorBy<Error>(["message", "hacking"], hackingErrorFn),
+  CaughtErrorBy<NetworkError>(["status", 404], statusErrorFn),
   UnCaughtError(uncaughtErrorFn)
 );
 
@@ -74,6 +100,24 @@ describe(Capsule.name, () => {
     expect(systemErrorFn).not.toHaveBeenCalled();
     expect(uncaughtErrorFn).not.toHaveBeenCalled();
     expect(bubbleFn).toHaveBeenCalled();
+  });
+
+  it("should catch Error by message", () => {
+    const result = sayHello("Kevin");
+
+    expect(result).toBeUndefined();
+    expect(systemErrorFn).not.toHaveBeenCalled();
+    expect(uncaughtErrorFn).not.toHaveBeenCalled();
+    expect(hackingErrorFn).toHaveBeenCalled();
+  });
+
+  it("should catch Error by status", () => {
+    const result = sayHello("_");
+
+    expect(result).toBeUndefined();
+    expect(systemErrorFn).not.toHaveBeenCalled();
+    expect(uncaughtErrorFn).not.toHaveBeenCalled();
+    expect(statusErrorFn).toHaveBeenCalled();
   });
 
   it.skip("should pipe another task", () => {
