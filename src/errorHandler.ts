@@ -5,6 +5,7 @@ export const errorHandler = (
   error: unknown,
 ) => {
   const uncaughtError = tasks.find((task) => task.name === 'UnCaughtError');
+
   const isHandled = tasks.some((task) => {
     // Earlier return, if error is falsy and does not contain much information
     // we pipe it to the uncaughtError callback

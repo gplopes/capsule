@@ -1,6 +1,7 @@
 # Capsule
 
 ## Description
+
 Capsule is a lightweight function wrapper designed to enhance error handling in your codebase with grace and simplicity. With Capsule, managing errors becomes intuitive and flexible, allowing for cleaner and more robust code.
 
 ## Usage
@@ -22,8 +23,7 @@ UnCaughtError((error) => {
 Furthermore, Capsule optimizes error handling by employing a first-match approach. Once a match is found, it exits the check.
 
 ```tsx
-const requestData = AsyncCapsule(async (id: string) => {
-const requestData = AsyncCapsule(async (id: string) => {
+const requestData = Capsule(async (id: string) => {
     const response = await fetch(`.../${id}`);
     const responseData = await response.json();
     return responseData.data;
@@ -34,4 +34,3 @@ CatchErrorBy(["status", 401], (error) => console.log("Unauthorized access:", err
 
 const result = await requestData("<id>");
 ```
-

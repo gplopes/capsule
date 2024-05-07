@@ -1,5 +1,5 @@
 import { SystemError, BubbleError, NetworkError } from './mocks';
-import { Capsule, AsyncCapsule } from '../capsule';
+import { Capsule, SyncCapsule } from '../capsule';
 import { CaughtError, UnCaughtError, CaughtErrorBy } from '../tasks';
 
 const systemErrorFn = jest.fn();
@@ -10,7 +10,7 @@ const hackingErrorFn = jest.fn();
 
 const statusErrorFn = jest.fn();
 
-const sayHello = Capsule((name: string) => {
+const sayHello = SyncCapsule((name: string) => {
   if (typeof name === 'number') {
     throw new SystemError('Number is not allowed');
   }
@@ -42,7 +42,7 @@ const sayHello = Capsule((name: string) => {
   }),
 );
 
-const fetchHello = AsyncCapsule(async (name: string) => {
+const fetchHello = Capsule(async (name: string) => {
   return `Async Hello, ${name}!`;
 })(UnCaughtError(uncaughtErrorFn));
 
@@ -80,7 +80,7 @@ describe(Capsule.name, () => {
   it('should catch BubbleError from the', () => {
     const bubbleFn = jest.fn();
 
-    const wrappedSayHello = Capsule(sayHello)(CaughtError(BubbleError, bubbleFn));
+    const wrappedSayHello = SyncCapsule(sayHello)(CaughtError(BubbleError, bubbleFn));
 
     const result = wrappedSayHello('Sara');
 
@@ -109,7 +109,7 @@ describe(Capsule.name, () => {
   });
 });
 
-describe(AsyncCapsule.name, () => {
+describe(Capsule.name, () => {
   it('should say hello', async () => {
     const result = await fetchHello('Mike');
 
